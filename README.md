@@ -16,6 +16,18 @@ Your App → POST /api/sms/send (API key) → SMS-API → Webhook → Companion 
 
 ---
 
+## Interfaces
+
+The platform is accessible in two ways:
+
+| Interface | Description |
+|-----------|-------------|
+| **Web UI** | Browser-based dashboard at `http://localhost:3000` for managing accounts, SIM cards, API keys, and sending SMS |
+| **CLI** | Command-line tool (`sms-api`) for scripting and terminal-based workflows |
+| **REST API** | Programmatic HTTP access (documented below) |
+
+---
+
 ## Quick Start
 
 ### Prerequisites
@@ -33,6 +45,73 @@ npm start
 ```
 
 The server starts on `http://localhost:3000` by default.
+
+---
+
+## Web UI
+
+Open `http://localhost:3000` in your browser. You can:
+
+- **Register / Log in** using the sign-in form.
+- **SIM Cards** tab – register an Indian mobile number and verify it with an OTP.
+- **API Keys** tab – create and revoke API keys (full key shown once at creation).
+- **Send SMS** tab – send a message using an API key and a verified SIM card.
+- **Logs** tab – paginated history of all outbound messages.
+- **Webhooks** tab – register companion device endpoints for message delivery.
+
+---
+
+## CLI
+
+Install the CLI globally after running `npm install`:
+
+```bash
+npm link          # makes 'sms-api' available system-wide
+# or run directly:
+node src/cli/index.js --help
+```
+
+By default the CLI talks to `http://localhost:3000`. Override with `--url` or the `$SMSAPI_URL` environment variable.
+
+### Available commands
+
+```
+sms-api register              # Create a new account (interactive prompts)
+sms-api login                 # Log in and store credentials locally
+sms-api logout                # Clear stored credentials
+sms-api profile               # Show your account profile
+
+sms-api sim list              # List registered SIM cards
+sms-api sim add               # Register a new Indian SIM card
+sms-api sim verify            # Verify a SIM card with its OTP
+sms-api sim remove <id>       # Deactivate a SIM card
+
+sms-api keys list             # List API keys
+sms-api keys create           # Create a new API key
+sms-api keys revoke <id>      # Revoke an API key
+
+sms-api sms send              # Send an SMS (uses X-API-Key)
+sms-api sms logs              # View paginated SMS logs
+
+sms-api webhooks list         # List registered webhooks
+sms-api webhooks add          # Register a companion device webhook
+sms-api webhooks remove <id>  # Delete a webhook
+```
+
+Credentials (JWT token) are stored in `~/.smsapi/config.json` after login. Pass all values as flags or let the CLI prompt interactively.
+
+**Example workflow:**
+
+```bash
+sms-api register --name "Rahul" --email rahul@example.com --password secret123
+sms-api sim add --phone +919876543210 --label "Business"
+# Copy the sim_card_id and otp_for_testing from the output, then:
+sms-api sim verify --id <sim_card_id> --otp <otp>
+sms-api keys create --name "My App"
+# Copy the full key value, then:
+sms-api sms send --key smsapi_... --to 9123456789 --message "Hello from CLI!"
+sms-api sms logs
+```
 
 ---
 
