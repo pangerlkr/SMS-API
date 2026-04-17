@@ -231,9 +231,9 @@ function renderSimCards() {
       <td>${escapeHtml(formatDate(s.created_at))}</td>
       <td>
         <div class="flex-gap">
-          ${!s.verified ? `<button class="btn-secondary btn-sm" onclick="openVerifyModal('${escapeHtml(s.id)}')">Verify</button>` : ''}
-          ${!s.verified ? `<button class="btn-ghost btn-sm" onclick="resendOtp('${escapeHtml(s.id)}')">Resend OTP</button>` : ''}
-          <button class="btn-danger btn-sm" onclick="removeSim('${escapeHtml(s.id)}')">Remove</button>
+          ${!s.verified ? `<button class="btn-secondary btn-sm" data-action="verify" data-id="${escapeHtml(s.id)}">Verify</button>` : ''}
+          ${!s.verified ? `<button class="btn-ghost btn-sm" data-action="resend-otp" data-id="${escapeHtml(s.id)}">Resend OTP</button>` : ''}
+          <button class="btn-danger btn-sm" data-action="remove-sim" data-id="${escapeHtml(s.id)}">Remove</button>
         </div>
       </td>
     </tr>
@@ -344,7 +344,7 @@ function renderApiKeys() {
       <td><span class="key-value">${escapeHtml(k.key_preview)}</span></td>
       <td>${k.active ? '<span class="badge badge-success">Active</span>' : '<span class="badge badge-muted">Revoked</span>'}</td>
       <td>${k.last_used_at ? escapeHtml(formatDate(k.last_used_at)) : '—'}</td>
-      <td>${k.active ? `<button class="btn-danger btn-sm" onclick="revokeKey('${escapeHtml(k.id)}')">Revoke</button>` : ''}</td>
+      <td>${k.active ? `<button class="btn-danger btn-sm" data-action="revoke-key" data-id="${escapeHtml(k.id)}">Revoke</button>` : ''}</td>
     </tr>
   `).join('');
 }
@@ -486,7 +486,7 @@ function renderWebhooks(webhooks) {
       <td>${escapeHtml(w.endpoint_url)}</td>
       <td>${w.active ? '<span class="badge badge-success">Active</span>' : '<span class="badge badge-muted">Inactive</span>'}</td>
       <td>${escapeHtml(formatDate(w.created_at))}</td>
-      <td><button class="btn-danger btn-sm" onclick="deleteWebhook('${escapeHtml(w.id)}')">Delete</button></td>
+      <td><button class="btn-danger btn-sm" data-action="delete-webhook" data-id="${escapeHtml(w.id)}">Delete</button></td>
     </tr>
   `).join('');
 }
@@ -588,6 +588,38 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('logs-prev').addEventListener('click', () => loadLogs(logsPage - 1));
   document.getElementById('logs-next').addEventListener('click', () => loadLogs(logsPage + 1));
   document.getElementById('logs-refresh').addEventListener('click', () => loadLogs(logsPage));
+
+  // SIM table actions (event delegation – avoids inline onclick / CSP violation)
+  document.getElementById('sim-tbody').addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-action]');
+    if (!btn) return;
+    const { action, id } = btn.dataset;
+    if (action === 'verify') openVerifyModal(id);
+    else if (action === 'resend-otp') resendOtp(id);
+    else if (action === 'remove-sim') removeSim(id);
+  });
+
+  // API Keys table actions (event delegation)
+  document.getElementById('keys-tbody').addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-action]');
+    if (!btn) return;
+    if (btn.dataset.action === 'revoke-key') revokeKey(btn.dataset.id);
+  });
+
+  // Webhooks table actions (event delegation)
+  document.getElementById('webhooks-tbody').addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-action]');
+    if (!btn) return;
+    if (btn.dataset.action === 'delete-webhook') deleteWebhook(btn.dataset.id);
+  });
+
+  // "API Keys" shortcut link in Send SMS tab
+  const gotoKeysBtn = document.getElementById('goto-keys-btn');
+  if (gotoKeysBtn) {
+    gotoKeysBtn.addEventListener('click', () => {
+      document.querySelector('[data-tab=keys]').click();
+    });
+  }
 
   // Webhooks
   document.getElementById('add-webhook-form').addEventListener('submit', handleAddWebhook);
