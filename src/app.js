@@ -2,6 +2,7 @@
 
 require('dotenv').config();
 
+const path = require('path');
 const express = require('express');
 const helmet = require('helmet');
 const cors = require('cors');
@@ -15,11 +16,29 @@ const webhookRoutes = require('./routes/webhooks');
 
 const app = express();
 
-// Security headers
-app.use(helmet());
+// Security headers – relax CSP to allow the UI's self-hosted scripts/styles
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'"],
+        styleSrc: ["'self'"],
+        imgSrc: ["'self'", 'data:'],
+        connectSrc: ["'self'"],
+        fontSrc: ["'self'"],
+        objectSrc: ["'none'"],
+        frameSrc: ["'none'"]
+      }
+    }
+  })
+);
 
 // CORS
 app.use(cors());
+
+// Serve web UI static files
+app.use(express.static(path.join(__dirname, '..', 'public')));
 
 // Body parsing
 app.use(express.json());
