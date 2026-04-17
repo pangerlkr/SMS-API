@@ -98,12 +98,12 @@ function verifySim(req, res) {
     return res.status(409).json({ error: 'SIM card already verified' });
   }
 
-  if (!sim.otp_code || sim.otp_code !== otp) {
-    return res.status(400).json({ error: 'Invalid OTP' });
+  if (!sim.otp_code || new Date(sim.otp_expires_at) < new Date()) {
+    return res.status(400).json({ error: 'OTP has expired. Please request a new one.' });
   }
 
-  if (new Date(sim.otp_expires_at) < new Date()) {
-    return res.status(400).json({ error: 'OTP has expired. Please request a new one.' });
+  if (sim.otp_code !== otp) {
+    return res.status(400).json({ error: 'Invalid OTP' });
   }
 
   run(
@@ -112,6 +112,48 @@ function verifySim(req, res) {
   );
 
   return res.json({ message: 'SIM card verified successfully', sim_card_id });
+}
+
+/**
+ * POST /api/sim/resend
+ * Body: { sim_card_id }
+ * Resend a verification OTP for an unverified SIM card.
+ */
+function resendOtp(req, res) {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
+  const { sim_card_id } = req.body;
+  const userId = req.user.id;
+
+  const sim = get(
+    'SELECT id, verified FROM sim_cards WHERE id = ? AND user_id = ?',
+    [sim_card_id, userId]
+  );
+
+  if (!sim) {
+    return res.status(404).json({ error: 'SIM card not found' });
+  }
+
+  if (sim.verified) {
+    return res.status(409).json({ error: 'SIM card is already verified' });
+  }
+
+  const otp = generateOtp();
+  const expires = new Date(Date.now() + 10 * 60 * 1000).toISOString();
+  run(
+    'UPDATE sim_cards SET otp_code = ?, otp_expires_at = ? WHERE id = ?',
+    [otp, expires, sim_card_id]
+  );
+
+  // In a real system the OTP would be delivered via SMS to the handset.
+  return res.json({
+    message: 'OTP resent. Please verify your SIM card.',
+    sim_card_id,
+    otp_for_testing: otp
+  });
 }
 
 /**
@@ -167,4 +209,4 @@ function normaliseIndianNumber(raw) {
   return null;
 }
 
-module.exports = { registerSim, verifySim, listSims, removeSim, normaliseIndianNumber };
+module.exports = { registerSim, verifySim, resendOtp, listSims, removeSim, normaliseIndianNumber };

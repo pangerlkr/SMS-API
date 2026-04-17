@@ -232,6 +232,7 @@ function renderSimCards() {
       <td>
         <div class="flex-gap">
           ${!s.verified ? `<button class="btn-secondary btn-sm" onclick="openVerifyModal('${escapeHtml(s.id)}')">Verify</button>` : ''}
+          ${!s.verified ? `<button class="btn-ghost btn-sm" onclick="resendOtp('${escapeHtml(s.id)}')">Resend OTP</button>` : ''}
           <button class="btn-danger btn-sm" onclick="removeSim('${escapeHtml(s.id)}')">Remove</button>
         </div>
       </td>
@@ -306,6 +307,18 @@ async function removeSim(id) {
   const { ok, data } = await apiFetch(`/sim/${id}`, { method: 'DELETE' });
   if (!ok) { alert(data.error || 'Error'); return; }
   await loadSimCards();
+}
+
+async function resendOtp(simId) {
+  const { ok, data } = await apiFetch('/sim/resend', {
+    method: 'POST',
+    body: JSON.stringify({ sim_card_id: simId })
+  });
+  if (!ok) {
+    showAlert('sim-alert', data.error || JSON.stringify(data));
+    return;
+  }
+  showAlert('sim-alert', `✓ ${data.message} OTP (dev): ${data.otp_for_testing}`, 'success');
 }
 
 // ---------------------------------------------------------------------------
