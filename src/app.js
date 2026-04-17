@@ -63,6 +63,11 @@ app.use('/api/webhooks', webhookRoutes);
 // Health check
 app.get('/health', (_req, res) => res.json({ status: 'ok' }));
 
+// Root – belt-and-suspenders fallback in case express.static misses it
+app.get('/', (_req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
+});
+
 // 404 handler
 app.use((_req, res) => res.status(404).json({ error: 'Not found' }));
 
