@@ -41,7 +41,7 @@
             <label for="password">Password</label>
             <input type="password" id="password" name="password" placeholder="••••••••" required autocomplete="current-password" />
           </div>
-          <button type="submit" class="btn-primary" style="width:100%">Sign In</button>
+          <button type="submit" class="btn-primary btn-full">Sign In</button>
         </form>
       </div>
     </div>
@@ -64,7 +64,7 @@
             <label for="reg_password">Password <span class="form-hint">(min 8 characters)</span></label>
             <input type="password" id="reg_password" name="reg_password" placeholder="••••••••" required minlength="8" autocomplete="new-password" />
           </div>
-          <button type="submit" class="btn-primary" style="width:100%">Create Account</button>
+          <button type="submit" class="btn-primary btn-full">Create Account</button>
         </form>
       </div>
     </div>
@@ -91,16 +91,16 @@
     </div>
 
     <!-- Add SIM form -->
-    <div class="card" style="margin-bottom:1.25rem">
+    <div class="card mb-card">
       <div class="card-header">Register a SIM Card</div>
       <div class="card-body">
         <div id="sim-alert" class="alert"></div>
-        <form id="add-sim-form" style="display:grid;grid-template-columns:1fr 1fr auto;gap:.75rem;align-items:end">
-          <div class="form-group" style="margin-bottom:0">
+        <form id="add-sim-form" class="form-grid-3col">
+          <div class="form-group mb-0">
             <label for="sim_phone">Phone Number</label>
             <input type="text" id="sim_phone" name="sim_phone" placeholder="+919876543210" required />
           </div>
-          <div class="form-group" style="margin-bottom:0">
+          <div class="form-group mb-0">
             <label for="sim_label">Label <span class="form-hint">(optional)</span></label>
             <input type="text" id="sim_label" name="sim_label" placeholder="Business SIM" />
           </div>
@@ -134,12 +134,12 @@
     </div>
 
     <!-- Create key form -->
-    <div class="card" style="margin-bottom:1.25rem">
+    <div class="card mb-card">
       <div class="card-header">Create API Key</div>
       <div class="card-body">
         <div id="keys-alert" class="alert"></div>
-        <form id="create-key-form" style="display:grid;grid-template-columns:1fr auto;gap:.75rem;align-items:end">
-          <div class="form-group" style="margin-bottom:0">
+        <form id="create-key-form" class="form-grid-2col">
+          <div class="form-group mb-0">
             <label for="key_name">Key Name</label>
             <input type="text" id="key_name" name="key_name" placeholder="My Business App" required />
           </div>
@@ -170,7 +170,7 @@
       <h2>Send SMS</h2>
     </div>
 
-    <div class="card" style="max-width:560px">
+    <div class="card card-narrow">
       <div class="card-body">
         <div id="sms-alert" class="alert"></div>
         <form id="send-sms-form">
@@ -230,7 +230,7 @@
       <h2>Webhooks</h2>
     </div>
 
-    <div class="card" style="margin-bottom:1.25rem">
+    <div class="card mb-card">
       <div class="card-header">Register Webhook</div>
       <div class="card-body">
         <div id="webhook-alert" class="alert"></div>
@@ -278,14 +278,14 @@
       <button class="modal-close" aria-label="Close">✕</button>
     </div>
     <div class="modal-body">
-      <p class="text-muted" style="margin-bottom:1rem">Enter the 6-digit OTP sent to your number (shown in <code>otp_for_testing</code> during development).</p>
+      <p class="text-muted mb-4">Enter the 6-digit OTP sent to your number (shown in <code>otp_for_testing</code> during development).</p>
       <div id="verify-alert" class="alert"></div>
       <form id="verify-form">
         <div class="form-group">
           <label for="verify-otp">OTP</label>
           <input type="text" id="verify-otp" placeholder="123456" maxlength="6" pattern="\d{6}" required />
         </div>
-        <div class="modal-footer" style="padding:0;border:none;margin-top:.5rem">
+        <div class="modal-footer modal-footer-flush">
           <button type="button" class="btn-secondary" data-dismiss>Cancel</button>
           <button type="submit" class="btn-primary">Verify</button>
         </div>
@@ -302,18 +302,18 @@
       <button class="modal-close" aria-label="Close">✕</button>
     </div>
     <div class="modal-body">
-      <p style="margin-bottom:.75rem">Your new API key <strong id="new-key-name-display"></strong> has been created.</p>
-      <div class="alert alert-warning show" style="margin-bottom:1rem">
+      <p class="mb-3">Your new API key <strong id="new-key-name-display"></strong> has been created.</p>
+      <div class="alert alert-warning show mb-4">
         ⚠ Copy this key now. It will <strong>not</strong> be shown again in full.
       </div>
       <div class="form-group">
         <label>API Key</label>
         <div class="flex-gap">
-          <code class="key-value" id="new-key-value" style="flex:1;word-break:break-all"></code>
+          <code class="key-value key-display" id="new-key-value"></code>
           <button id="copy-new-key-btn" class="btn-secondary copy-btn">Copy</button>
         </div>
       </div>
-      <div class="modal-footer" style="padding:0;border:none;margin-top:.5rem">
+      <div class="modal-footer modal-footer-flush">
         <button type="button" class="btn-primary" data-dismiss>Done</button>
       </div>
     </div>
