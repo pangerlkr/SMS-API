@@ -57,7 +57,7 @@ function saveDb() {
 function run(sql, params = []) {
   const database = getDb();
   database.run(sql, params);
-  saveDb();
+  module.exports.saveDb();
 }
 
 /**
