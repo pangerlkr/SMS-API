@@ -280,6 +280,7 @@ By default the CLI talks to `http://localhost:3000`. Override with `--url` or th
 | `sms-api sim list` | List registered SIM cards |
 | `sms-api sim add` | Register a new Indian SIM card |
 | `sms-api sim verify` | Verify a SIM card with its OTP |
+| `sms-api sim resend` | Resend the OTP for an unverified SIM card |
 | `sms-api sim remove <id>` | Deactivate a SIM card |
 | `sms-api keys list` | List API keys |
 | `sms-api keys create` | Create a new API key |
@@ -333,6 +334,7 @@ The platform uses two authentication mechanisms:
 | `GET` | `/api/auth/profile` | JWT | Fetch your profile |
 | `POST` | `/api/sim/register` | JWT | Register a new SIM card |
 | `POST` | `/api/sim/verify` | JWT | Verify SIM ownership via OTP |
+| `POST` | `/api/sim/resend` | JWT | Resend verification OTP for an unverified SIM card |
 | `GET` | `/api/sim` | JWT | List your SIM cards |
 | `DELETE` | `/api/sim/:id` | JWT | Deactivate a SIM card |
 | `POST` | `/api/keys` | JWT | Create an API key |
@@ -447,6 +449,30 @@ POST /api/sim/verify
 ```json
 { "sim_card_id": "uuid", "otp": "123456" }
 ```
+
+#### Resend Verification OTP
+
+```
+POST /api/sim/resend
+```
+
+Use this when the OTP has expired or was not received. Generates and returns a fresh 6-digit OTP for the given unverified SIM card.
+
+**Body:**
+```json
+{ "sim_card_id": "uuid" }
+```
+
+**Response `200`:**
+```json
+{
+  "message": "OTP resent. Please verify your SIM card.",
+  "sim_card_id": "uuid",
+  "otp_for_testing": "654321"
+}
+```
+
+Returns `409` if the SIM card is already verified, `404` if the SIM card is not found.
 
 #### List SIM Cards
 

@@ -109,6 +109,78 @@ describe('SIM Card API', () => {
 
     expect(res.status).toBe(200);
   });
+
+  test('POST /api/sim/resend – resends OTP for unverified SIM', async () => {
+    const reg = await request(app)
+      .post('/api/sim/register')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ phone_number: '+919876543210' });
+
+    const res = await request(app)
+      .post('/api/sim/resend')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ sim_card_id: reg.body.sim_card_id });
+
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty('otp_for_testing');
+    expect(res.body.otp_for_testing).toMatch(/^\d{6}$/);
+  });
+
+  test('POST /api/sim/resend – new OTP can be used to verify', async () => {
+    const reg = await request(app)
+      .post('/api/sim/register')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ phone_number: '+919876543210' });
+
+    const resend = await request(app)
+      .post('/api/sim/resend')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ sim_card_id: reg.body.sim_card_id });
+
+    const verify = await request(app)
+      .post('/api/sim/verify')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ sim_card_id: reg.body.sim_card_id, otp: resend.body.otp_for_testing });
+
+    expect(verify.status).toBe(200);
+    expect(verify.body.message).toMatch(/verified/i);
+  });
+
+  test('POST /api/sim/resend – 409 for already verified SIM', async () => {
+    const reg = await request(app)
+      .post('/api/sim/register')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ phone_number: '+919876543210' });
+
+    await request(app)
+      .post('/api/sim/verify')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ sim_card_id: reg.body.sim_card_id, otp: reg.body.otp_for_testing });
+
+    const res = await request(app)
+      .post('/api/sim/resend')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ sim_card_id: reg.body.sim_card_id });
+
+    expect(res.status).toBe(409);
+  });
+
+  test('POST /api/sim/resend – 404 for unknown SIM card', async () => {
+    const res = await request(app)
+      .post('/api/sim/resend')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ sim_card_id: 'nonexistent-id' });
+
+    expect(res.status).toBe(404);
+  });
+
+  test('POST /api/sim/resend – 401 without auth', async () => {
+    const res = await request(app)
+      .post('/api/sim/resend')
+      .send({ sim_card_id: 'some-id' });
+
+    expect(res.status).toBe(401);
+  });
 });
 
 describe('normaliseIndianNumber', () => {

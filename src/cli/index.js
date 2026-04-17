@@ -372,6 +372,31 @@ simCmd
   });
 
 simCmd
+  .command('resend')
+  .description('Resend the OTP for an unverified SIM card')
+  .option('--id <sim_card_id>', 'SIM card ID')
+  .action(async (opts) => {
+    const config = loadConfig();
+    const baseUrl = getBaseUrl(opts);
+    const sim_card_id = opts.id || (await prompt('SIM card ID: '));
+
+    const { status, ok, data } = await apiRequest(
+      'POST',
+      `${baseUrl}/api/sim/resend`,
+      { sim_card_id },
+      bearerHeaders(config)
+    );
+
+    if (!ok) {
+      console.error(`Error (${status}):`, data.error || data);
+      process.exit(1);
+    }
+
+    console.log(`\n✓ ${data.message}`);
+    console.log(`  OTP (dev/test):  ${data.otp_for_testing}`);
+  });
+
+simCmd
   .command('remove <id>')
   .description('Deactivate a SIM card')
   .action(async (id, opts) => {
