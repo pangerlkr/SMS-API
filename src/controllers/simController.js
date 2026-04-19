@@ -4,6 +4,11 @@ const { v4: uuidv4 } = require('uuid');
 const { validationResult } = require('express-validator');
 const { run, get, all } = require('../db');
 
+const IS_PRODUCTION = (process.env.NODE_ENV || 'development') === 'production';
+
+/** Maximum wrong OTP attempts before requiring a resend */
+const MAX_OTP_ATTEMPTS = 5;
+
 /**
  * Generate a 6-digit OTP.
  */
@@ -39,20 +44,19 @@ function registerSim(req, res) {
     if (existing.verified) {
       return res.status(409).json({ error: 'Phone number already registered and verified' });
     }
-    // Re-send OTP
+    // Re-send OTP and reset attempt counter
     const otp = generateOtp();
     const expires = new Date(Date.now() + 10 * 60 * 1000).toISOString();
     run(
-      "UPDATE sim_cards SET otp_code = ?, otp_expires_at = ? WHERE id = ?",
+      'UPDATE sim_cards SET otp_code = ?, otp_expires_at = ?, otp_attempts = 0 WHERE id = ?',
       [otp, expires, existing.id]
     );
-    // In a real system the OTP would be delivered via SMS to the handset.
-    // We return it in the response for development/testing purposes.
-    return res.json({
+    const response = {
       message: 'OTP resent. Please verify your SIM card.',
-      sim_card_id: existing.id,
-      otp_for_testing: otp
-    });
+      sim_card_id: existing.id
+    };
+    if (!IS_PRODUCTION) response.otp_for_testing = otp;
+    return res.json(response);
   }
 
   const id = uuidv4();
@@ -64,11 +68,12 @@ function registerSim(req, res) {
     [id, userId, normalised, label || null, otp, expires]
   );
 
-  return res.status(201).json({
+  const response = {
     message: 'SIM card registered. Please verify using the OTP sent to your number.',
-    sim_card_id: id,
-    otp_for_testing: otp
-  });
+    sim_card_id: id
+  };
+  if (!IS_PRODUCTION) response.otp_for_testing = otp;
+  return res.status(201).json(response);
 }
 
 /**
@@ -102,12 +107,24 @@ function verifySim(req, res) {
     return res.status(400).json({ error: 'OTP has expired. Please request a new one.' });
   }
 
+  const attempts = (sim.otp_attempts || 0);
+  if (attempts >= MAX_OTP_ATTEMPTS) {
+    return res.status(429).json({
+      error: `Too many incorrect OTP attempts. Please request a new OTP via /api/sim/resend.`
+    });
+  }
+
   if (sim.otp_code !== otp) {
-    return res.status(400).json({ error: 'Invalid OTP' });
+    run('UPDATE sim_cards SET otp_attempts = otp_attempts + 1 WHERE id = ?', [sim_card_id]);
+    const remaining = MAX_OTP_ATTEMPTS - attempts - 1;
+    return res.status(400).json({
+      error: 'Invalid OTP',
+      attempts_remaining: remaining
+    });
   }
 
   run(
-    "UPDATE sim_cards SET verified = 1, otp_code = NULL, otp_expires_at = NULL WHERE id = ?",
+    'UPDATE sim_cards SET verified = 1, otp_code = NULL, otp_expires_at = NULL, otp_attempts = 0 WHERE id = ?',
     [sim_card_id]
   );
 
@@ -144,16 +161,16 @@ function resendOtp(req, res) {
   const otp = generateOtp();
   const expires = new Date(Date.now() + 10 * 60 * 1000).toISOString();
   run(
-    'UPDATE sim_cards SET otp_code = ?, otp_expires_at = ? WHERE id = ?',
+    'UPDATE sim_cards SET otp_code = ?, otp_expires_at = ?, otp_attempts = 0 WHERE id = ?',
     [otp, expires, sim_card_id]
   );
 
-  // In a real system the OTP would be delivered via SMS to the handset.
-  return res.json({
+  const response = {
     message: 'OTP resent. Please verify your SIM card.',
-    sim_card_id,
-    otp_for_testing: otp
-  });
+    sim_card_id
+  };
+  if (!IS_PRODUCTION) response.otp_for_testing = otp;
+  return res.json(response);
 }
 
 /**

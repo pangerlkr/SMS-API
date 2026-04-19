@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS sim_cards (
   verified INTEGER NOT NULL DEFAULT 0,
   otp_code TEXT,
   otp_expires_at TEXT,
+  otp_attempts INTEGER NOT NULL DEFAULT 0,
   active INTEGER NOT NULL DEFAULT 1,
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   FOREIGN KEY (user_id) REFERENCES users(id),

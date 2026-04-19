@@ -34,6 +34,14 @@ async function initDb() {
   // Apply schema
   const schema = fs.readFileSync(SCHEMA_PATH, 'utf8');
   db.run(schema);
+
+  // Run migrations for columns added after initial schema creation
+  try {
+    db.run('ALTER TABLE sim_cards ADD COLUMN otp_attempts INTEGER NOT NULL DEFAULT 0');
+  } catch {
+    // Column already exists – ignore
+  }
+
   saveDb();
 
   return db;
