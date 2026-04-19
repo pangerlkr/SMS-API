@@ -102,7 +102,9 @@ app.use('/api/webhooks', webhookRoutes);
 // Health check – verifies DB is reachable
 app.get('/health', (_req, res) => {
   try {
-    getDb().exec('SELECT 1');
+    const stmt = getDb().prepare('SELECT 1');
+    stmt.step();
+    stmt.free();
     res.json({ status: 'ok' });
   } catch {
     res.status(503).json({ status: 'error', message: 'Database unavailable' });

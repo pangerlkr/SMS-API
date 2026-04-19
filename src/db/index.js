@@ -35,14 +35,14 @@ async function initDb() {
   const schema = fs.readFileSync(SCHEMA_PATH, 'utf8');
   db.run(schema);
 
-  // Run migrations for columns added after initial schema creation
-  try {
+  // Run migrations for columns added after initial schema creation.
+  // Check for 'otp_attempts' via PRAGMA rather than catching ALTER TABLE errors.
+  const tableInfo = db.exec('PRAGMA table_info(sim_cards)');
+  const hasOtpAttempts =
+    tableInfo.length > 0 &&
+    tableInfo[0].values.some((row) => row[1] === 'otp_attempts');
+  if (!hasOtpAttempts) {
     db.run('ALTER TABLE sim_cards ADD COLUMN otp_attempts INTEGER NOT NULL DEFAULT 0');
-  } catch (err) {
-    // Only ignore the "duplicate column" error from SQLite
-    if (!err.message || !err.message.includes('duplicate column name')) {
-      throw err;
-    }
   }
 
   saveDb();
