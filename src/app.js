@@ -39,9 +39,23 @@ app.use(
   })
 );
 
-// CORS – configurable via CORS_ORIGIN env var
-const corsOrigin = process.env.CORS_ORIGIN || (IS_PRODUCTION ? false : '*');
-app.use(cors({ origin: corsOrigin }));
+// CORS – configurable via CORS_ORIGIN env var.
+// Accepts: a single origin URL, a comma-separated list of origin URLs, or "*".
+// Defaults to blocking all cross-origin requests in production when not set.
+function buildCorsOrigin() {
+  const raw = process.env.CORS_ORIGIN;
+  if (!raw) {
+    return IS_PRODUCTION ? false : '*';
+  }
+  if (raw === '*') {
+    return '*';
+  }
+  // Parse a comma-separated allow-list into an array of validated origins
+  const origins = raw.split(',').map((s) => s.trim()).filter(Boolean);
+  if (origins.length === 1) return origins[0];
+  return origins;
+}
+app.use(cors({ origin: buildCorsOrigin() }));
 
 // Serve web UI static files
 app.use(express.static(path.join(__dirname, '..', 'public')));
@@ -106,11 +120,10 @@ app.use((_req, res) => res.status(404).json({ error: 'Not found' }));
 // Global error handler – never expose stack traces in production
 // eslint-disable-next-line no-unused-vars
 app.use((err, _req, res, _next) => {
+  console.error(err);
   if (IS_PRODUCTION) {
-    console.error(err);
     res.status(500).json({ error: 'Internal server error' });
   } else {
-    console.error(err);
     res.status(500).json({ error: err.message || 'Internal server error', stack: err.stack });
   }
 });

@@ -107,7 +107,7 @@ function verifySim(req, res) {
     return res.status(400).json({ error: 'OTP has expired. Please request a new one.' });
   }
 
-  const attempts = (sim.otp_attempts || 0);
+  const attempts = sim.otp_attempts || 0;
   if (attempts >= MAX_OTP_ATTEMPTS) {
     return res.status(429).json({
       error: `Too many incorrect OTP attempts. Please request a new OTP via /api/sim/resend.`

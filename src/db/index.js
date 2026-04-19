@@ -38,8 +38,11 @@ async function initDb() {
   // Run migrations for columns added after initial schema creation
   try {
     db.run('ALTER TABLE sim_cards ADD COLUMN otp_attempts INTEGER NOT NULL DEFAULT 0');
-  } catch {
-    // Column already exists – ignore
+  } catch (err) {
+    // Only ignore the "duplicate column" error from SQLite
+    if (!err.message || !err.message.includes('duplicate column name')) {
+      throw err;
+    }
   }
 
   saveDb();
