@@ -242,12 +242,17 @@ function renderSimCards() {
 
 function populateSimSelects() {
   const verified = state.simCards.filter((s) => s.verified && s.active);
-  ['send-sim-id', 'webhook-sim-id'].forEach((id) => {
-    const sel = document.getElementById(id);
-    if (!sel) return;
-    sel.innerHTML = '<option value="">— auto-select —</option>' +
-      verified.map((s) => `<option value="${s.id}">${s.phone_number}${s.label ? ` (${s.label})` : ''}</option>`).join('');
-  });
+  const simOptions = verified.map((s) => `<option value="${s.id}">${s.phone_number}${s.label ? ` (${s.label})` : ''}</option>`).join('');
+
+  const sendSel = document.getElementById('send-sim-id');
+  if (sendSel) {
+    sendSel.innerHTML = '<option value="">— auto-select —</option>' + simOptions;
+  }
+
+  const webhookSel = document.getElementById('webhook-sim-id');
+  if (webhookSel) {
+    webhookSel.innerHTML = '<option value="">— select verified SIM —</option>' + simOptions;
+  }
 }
 
 async function handleAddSim(e) {
