@@ -1,0 +1,52 @@
+service: sms-api
+
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: nodejs20.x
+  region: ${opt:region, 'ap-south-1'}   # Default to Mumbai – nearest to India
+  stage: ${opt:stage, 'prod'}
+  memorySize: 512
+  timeout: 29                            # API Gateway max is 29 s
+  environment:
+    NODE_ENV: production
+    JWT_SECRET: ${env:JWT_SECRET}
+    JWT_EXPIRES_IN: ${env:JWT_EXPIRES_IN, '7d'}
+    CORS_ORIGIN: ${env:CORS_ORIGIN, ''}
+    # For durable storage mount an EFS access point and set DB_PATH, e.g.:
+    #   DB_PATH: /mnt/efs/sms_api.db
+    # Without EFS the database is ephemeral (resets on cold start).
+    DB_PATH: ${env:DB_PATH, ':memory:'}
+  httpApi:
+    cors: true
+
+functions:
+  api:
+    handler: src/handler.handler
+    events:
+      - httpApi:
+          path: /{proxy+}
+          method: ANY
+      - httpApi:
+          path: /
+          method: ANY
+
+plugins: []
+
+package:
+  patterns:
+    - '!.git/**'
+    - '!.github/**'
+    - '!tests/**'
+    - '!data/**'
+    - '!*.db'
+    - '!*.db-journal'
+    - '!docker-compose.yml'
+    - '!Dockerfile'
+    - '!.dockerignore'
+    - '!.env*'
+    - '!README.md'
+    - '!CONTRIBUTING.md'
+    - '!CODE_OF_CONDUCT.md'
+    - '!SECURITY.md'

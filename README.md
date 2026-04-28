@@ -9,6 +9,7 @@
 - [How It Works](#how-it-works)
 - [Interfaces](#interfaces)
 - [Quick Start](#quick-start)
+- [Serverless Deployment (AWS Lambda)](#serverless-deployment-aws-lambda)
 - [Architecture](#architecture)
 - [Message Flow](#message-flow)
 - [SMS Status Lifecycle](#sms-status-lifecycle)
@@ -68,6 +69,71 @@ npm start
 ```
 
 The server starts on `http://localhost:3000` by default.
+
+---
+
+## Serverless Deployment (AWS Lambda)
+
+The platform ships with a pre-built Lambda handler and a [Serverless Framework](https://www.serverless.com/) configuration so you can deploy to AWS API Gateway + Lambda with a single command.
+
+### Prerequisites
+
+| Requirement | Notes |
+|------------|-------|
+| AWS account | IAM user with Lambda, API Gateway, CloudFormation, S3, and IAM permissions |
+| Serverless Framework v3 | `npm install -g serverless@3` |
+| Node.js 18+ | Same as above |
+
+### One-time AWS credentials setup
+
+```bash
+serverless config credentials --provider aws \
+  --key <YOUR_AWS_ACCESS_KEY_ID> \
+  --secret <YOUR_AWS_SECRET_ACCESS_KEY>
+```
+
+### Deploy
+
+```bash
+# Set required environment variable
+export JWT_SECRET=$(node -e "console.log(require('crypto').randomBytes(48).toString('hex'))")
+
+# Deploy to Mumbai (ap-south-1) production stage
+serverless deploy --stage prod --region ap-south-1
+```
+
+Serverless Framework will:
+1. Package the application (excluding dev files and test fixtures)
+2. Create an S3 bucket for deployment artifacts
+3. Deploy an AWS Lambda function and an HTTP API Gateway endpoint
+4. Output the public URL
+
+### Database persistence
+
+By default the Lambda function uses an **in-memory SQLite database** (`DB_PATH=:memory:`).  
+All data is lost when the Lambda container is recycled.
+
+For a persistent database, mount an [Amazon EFS](https://aws.amazon.com/efs/) access point to the Lambda function and set `DB_PATH` to the mount path (e.g. `/mnt/efs/sms_api.db`). Refer to the [AWS docs on EFS + Lambda](https://docs.aws.amazon.com/lambda/latest/dg/configuration-filesystem.html) for the IAM and VPC setup required.
+
+### CI/CD with GitHub Actions
+
+Two workflows are included in `.github/workflows/`:
+
+| Workflow | Trigger | What it does |
+|----------|---------|--------------|
+| `ci.yml` | Push / PR to `main` | Installs dependencies and runs the full test suite on Node 18 and 20 |
+| `deploy.yml` | Push to `main` | Runs tests, then deploys to AWS Lambda via Serverless Framework |
+
+Required GitHub repository secrets and variables for the deploy workflow:
+
+| Name | Kind | Description |
+|------|------|-------------|
+| `AWS_ACCESS_KEY_ID` | Secret | AWS IAM access key ID |
+| `AWS_SECRET_ACCESS_KEY` | Secret | AWS IAM secret access key |
+| `JWT_SECRET` | Secret | Long random string for JWT signing |
+| `JWT_EXPIRES_IN` | Variable | Token expiry (e.g. `7d`); defaults to `7d` |
+| `CORS_ORIGIN` | Variable | Allowed origin(s); leave blank to block cross-origin in production |
+| `DB_PATH` | Variable | Database path; defaults to `:memory:` |
 
 ---
 
