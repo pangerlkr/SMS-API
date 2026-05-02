@@ -1,12 +1,27 @@
 {
   "name": "sms-api",
   "version": "1.0.0",
-  "description": "SMS Token Platform for India - Enable users to send SMS via their SIM card tokens",
+  "description": "SMS Token Platform for India – Enable users to send SMS via their SIM card tokens",
   "main": "src/server.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pangerlkr/SMS-API.git"
+  },
+  "homepage": "https://github.com/pangerlkr/SMS-API#readme",
+  "bugs": {
+    "url": "https://github.com/pangerlkr/SMS-API/issues"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
-    "test": "jest --runInBand --forceExit"
+    "test": "jest --runInBand --forceExit",
+    "test:coverage": "jest --runInBand --forceExit --coverage",
+    "lint": "eslint src/ tests/ --ext .js",
+    "lint:fix": "eslint src/ tests/ --ext .js --fix"
   },
   "bin": {
     "sms-api": "src/cli/index.js"
@@ -16,9 +31,14 @@
     "api",
     "india",
     "sim",
-    "gateway"
+    "gateway",
+    "nodejs",
+    "express",
+    "rest-api",
+    "cli",
+    "webhooks"
   ],
-  "author": "",
+  "author": "pangerlkr",
   "license": "MIT",
   "dependencies": {
     "bcryptjs": "^2.4.3",
@@ -35,17 +55,15 @@
     "uuid": "^9.0.1"
   },
   "devDependencies": {
+    "eslint": "^8.57.0",
     "jest": "^29.7.0",
     "nodemon": "^3.1.14",
     "supertest": "^6.3.4"
   },
   "jest": {
     "testEnvironment": "node",
-    "testMatch": [
-      "**/tests/**/*.test.js"
-    ],
-    "coveragePathIgnorePatterns": [
-      "/node_modules/"
-    ]
+    "testMatch": ["**/tests/**/*.test.js"],
+    "coveragePathIgnorePatterns": ["/node_modules/"],
+    "coverageReporters": ["text", "lcov", "html"]
   }
 }
